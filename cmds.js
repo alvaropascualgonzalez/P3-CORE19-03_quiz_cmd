@@ -1,7 +1,8 @@
 
 
 const {log, biglog, errorlog, colorize} = require("./out");
-
+const figlet = require('figlet');
+const chalk = require('chalk');
 const model = require('./model');
 
 
@@ -151,11 +152,34 @@ exports.editCmd = (rl, id) => {
  * @param id Clave del quiz a probar.
  */
 exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
-    rl.prompt();
+ if (typeof id === "undefined") {
+        errorlog(`Falta el parámetro id.`);
+        rl.prompt();
+    } else {
+        try {
+         const quiz = model.getByIndex(id);
+          rl.question(colorize(quiz.question + '?' , 'red'), answer => {
+          if (answer.toLowerCase() === quiz.answer.toLowerCase()){
+          log(`${colorize('Su respuesta es', 'blue')}:`);
+          biglog('CORRECTA', 'green');
+          rl.prompt(); }
+          else {
+          log(`${colorize('Su respuesta es', 'blue')}:`);
+          biglog('INCORRECTA', 'red');
+          rl.prompt(); }
+          });
+         // rl.prompt();
+    } catch (error) {
+            errorlog(error.message);
+            rl.prompt();
+                    }
+          }
 };
 
 
+
+
+// var toBeResolved = []; //guardar id de las respuestas
 /**
  * Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
  * Se gana si se contesta a todos satisfactoriamente.
@@ -163,9 +187,47 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-    log('Jugar.', 'red');
+  let score = 0;
+  let toBeResolved = [];
+  
+ // let id;
+  for (let i=0 ; i<model.count(); ++i){   //meter id
+  toBeResolved.push(i);
+}
+random = (max,min) => {
+ toBeResolved = toBeResolved.sort(function() {return Math.random() - 0.5});
+}
+  
+const playOne = () => {
+  if (score == model.count()){
+    log("No hay mas preguntas", 'red');
+    log("aciertos:" + score);
+    //return score;
     rl.prompt();
+   } else {
+   //let  id =Math.random()*toBeResolved.lenght);
+   // let id = random(model.count(),0);
+   // toBeResolved = toBeResolved[model.deleteByIndex(id)]; 
+    random(model.count,0);
+    let quiz = model.getByIndex(toBeResolved[score]);
+    rl.question(colorize(quiz.question + '?' , 'red'), answer => {
+         if (answer.toLowerCase() === quiz.answer.toLowerCase()){
+         log(`${colorize('Su respuesta es CORRECTA', 'green')}:`);
+         score += 1;
+         playOne();
+        } else {
+         log(`${colorize('Su respuesta es INCORRECTA', 'red')}:`);
+         log(`Fin del examen. Aciertos:` + score);
+         //return score;
+         rl.prompt();
+          }
+     });
+    }
+}
+playOne();
 };
+
+
 
 
 /**
@@ -175,8 +237,7 @@ exports.playCmd = rl => {
  */
 exports.creditsCmd = rl => {
     log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
+    log('Álvaro Pascual González', 'green');
     rl.prompt();
 };
 
